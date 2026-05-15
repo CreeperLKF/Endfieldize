@@ -69,16 +69,27 @@ export type LabelKey =
   | "easing"
   | "aspect"
   | "advancedMotion"
+  | "imageExportGroup"
+  | "videoExportGroup"
+  | "exportJpg"
   | "exportPng"
+  | "exportMp4"
   | "exportWebm"
   | "exportGif"
   | "exportLivp"
+  | "exportQuality"
+  | "exportQualitySmall"
+  | "exportQualityStandard"
+  | "exportQualityHigh"
   | "advancedExport"
   | "unsupportedFileGroup"
   | "imageDecodeFailed"
   | "videoDecodeFailed"
   | "noPreviewableMedia"
   | "canvasUnavailable"
+  | "stillExportFailed"
+  | "mp4ExportFailed"
+  | "mp4Unsupported"
   | "videoExportFailed"
   | "livePairExportFailed"
   | "gifExportFailed"
@@ -155,16 +166,27 @@ export const labels = {
     easing: "缓动",
     aspect: "画幅",
     advancedMotion: "高级运镜",
+    imageExportGroup: "图片",
+    videoExportGroup: "视频",
+    exportJpg: "JPG",
     exportPng: "PNG",
+    exportMp4: "MP4",
     exportWebm: "WEBM",
     exportGif: "GIF",
     exportLivp: ".LIVP",
+    exportQuality: "导出质量",
+    exportQualitySmall: "小",
+    exportQualityStandard: "标准",
+    exportQualityHigh: "高质量",
     advancedExport: "高级导出",
     unsupportedFileGroup: "不支持的文件组合",
     imageDecodeFailed: "图片解码失败",
     videoDecodeFailed: "视频解码失败",
     noPreviewableMedia: "未找到可预览媒体",
     canvasUnavailable: "Canvas 2D 上下文不可用",
+    stillExportFailed: "静帧导出失败",
+    mp4ExportFailed: "MP4 导出失败",
+    mp4Unsupported: "当前浏览器不支持 MP4 导出。请在高级导出中使用 WEBM，或导出 GIF。",
     videoExportFailed: "视频导出失败",
     livePairExportFailed: "Live Photo 导出失败",
     gifExportFailed: "GIF 导出失败",
@@ -240,16 +262,27 @@ export const labels = {
     easing: "Easing",
     aspect: "Aspect",
     advancedMotion: "Advanced motion",
+    imageExportGroup: "Image",
+    videoExportGroup: "Video",
+    exportJpg: "JPG",
     exportPng: "PNG",
+    exportMp4: "MP4",
     exportWebm: "WEBM",
     exportGif: "GIF",
     exportLivp: ".LIVP",
+    exportQuality: "Export quality",
+    exportQualitySmall: "Small",
+    exportQualityStandard: "Standard",
+    exportQualityHigh: "High",
     advancedExport: "Advanced export",
     unsupportedFileGroup: "Unsupported file group",
     imageDecodeFailed: "Image decode failed",
     videoDecodeFailed: "Video decode failed",
     noPreviewableMedia: "No previewable media found",
     canvasUnavailable: "Canvas 2D context is unavailable",
+    stillExportFailed: "Still export failed",
+    mp4ExportFailed: "MP4 export failed",
+    mp4Unsupported: "MP4 export is not supported in this browser. Use Advanced WEBM or GIF.",
     videoExportFailed: "Video export failed",
     livePairExportFailed: "Live Photo export failed",
     gifExportFailed: "GIF export failed",

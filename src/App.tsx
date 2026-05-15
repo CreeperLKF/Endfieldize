@@ -2,16 +2,19 @@ import { Upload } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, DragEvent } from "react";
 import { exportPhaseLabels, gradePresetLabels, t, titleColorLabels } from "./i18n";
-import exportStill, { downloadBlob, renderStillBlob } from "./lib/exportStill";
+import { downloadBlob, renderStillBlob } from "./lib/exportStill";
+import { jpegQualityForExport } from "./lib/exportQuality";
 import { downloadGif, exportGif } from "./lib/exportGif";
 import { downloadVideo, exportVideo } from "./lib/exportVideo";
 import { classifyLivePhotoFiles, packageLivp } from "./lib/livePhoto";
 import { renderComposition } from "./lib/render";
 import { DEFAULT_STATE, GRADE_PRESET_ORDER, TITLE_PRESET_ORDER, applyGradePreset, applyTitlePreset, markGradeCustom } from "./presets";
 import type { LabelKey } from "./i18n";
-import type { AppState, EasingName, GradePresetName, OutputAspect, SourceKind, TitleColorMode, TitlePosition, TitlePresetName } from "./types";
+import type { AppState, EasingName, ExportFormat, ExportQuality, GradePresetName, OutputAspect, SourceKind, TitleColorMode, TitlePosition, TitlePresetName } from "./types";
 
 const TITLE_COLOR_MODES: TitleColorMode[] = ["white", "black", "custom", "contrast"];
+const EXPORT_QUALITIES: ExportQuality[] = ["small", "standard", "high"];
+type StillExportFormat = Extract<ExportFormat, "jpg" | "png">;
 
 const INTERNAL_ERROR_LABELS: Record<string, LabelKey> = {
   "Unsupported file group": "unsupportedFileGroup",
@@ -19,6 +22,7 @@ const INTERNAL_ERROR_LABELS: Record<string, LabelKey> = {
   "Video decode failed": "videoDecodeFailed",
   "No previewable media found": "noPreviewableMedia",
   "Canvas 2D context is unavailable": "canvasUnavailable",
+  "Still export failed": "stillExportFailed",
 };
 
 function localizedErrorMessage(language: AppState["language"], error: unknown, fallbackKey: LabelKey): string {
@@ -317,12 +321,46 @@ export default function App() {
     }
   }
 
-  function handleStillExport() {
+  async function handleStillExport(format: StillExportFormat) {
     if (!image || isRendering) {
       return;
     }
 
-    exportStill(image, state);
+    const type = format === "jpg" ? "image/jpeg" : "image/png";
+    const quality = format === "jpg" ? jpegQualityForExport(state.export.quality) : undefined;
+    const exportState: AppState = {
+      ...state,
+      export: { ...state.export, format },
+    };
+
+    setState((current) => ({
+      ...current,
+      export: { ...current.export, format, progress: 0, status: "rendering", phase: "preparing-still", error: "" },
+    }));
+    uploadRequestRef.current += 1;
+
+    try {
+      const blob = await renderStillBlob(image, exportState, type, quality);
+      setState((current) => ({
+        ...current,
+        export: { ...current.export, phase: "downloading" },
+      }));
+      downloadBlob(blob, `endfieldize.${format}`);
+      setState((current) => ({
+        ...current,
+        export: { ...current.export, progress: 1, status: "done", phase: "done" },
+      }));
+    } catch (error) {
+      setState((current) => ({
+        ...current,
+        export: {
+          ...current.export,
+          status: "failed",
+          phase: "failed",
+          error: localizedErrorMessage(language, error, "stillExportFailed"),
+        },
+      }));
+    }
   }
 
   async function handleVideoExport() {
@@ -1146,16 +1184,46 @@ export default function App() {
 
           <div className="panel-section">
             <p className="eyebrow">05 / {t(language, "export").toUpperCase()}</p>
-            <div className="export-actions">
-              <button type="button" disabled={!image || isRendering} onClick={handleStillExport}>
-                {t(language, "exportPng")}
-              </button>
-              <button type="button" disabled={!image || isRendering} onClick={() => void handleVideoExport()}>
-                {t(language, "exportWebm")}
-              </button>
-              <button type="button" disabled={!image || isRendering} onClick={() => void handleGifExport()}>
-                {t(language, "exportGif")}
-              </button>
+            <label className="text-field">
+              <span>{t(language, "exportQuality")}</span>
+              <select
+                value={state.export.quality}
+                disabled={isRendering}
+                onChange={(event) =>
+                  setState((current) => ({
+                    ...current,
+                    export: { ...current.export, quality: event.target.value as ExportQuality },
+                  }))
+                }
+              >
+                {EXPORT_QUALITIES.map((quality) => (
+                  <option key={quality} value={quality}>
+                    {t(language, quality === "small" ? "exportQualitySmall" : quality === "standard" ? "exportQualityStandard" : "exportQualityHigh")}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="export-group">
+              <p className="export-group-label">{t(language, "imageExportGroup")}</p>
+              <div className="export-actions export-actions-two">
+                <button type="button" disabled={!image || isRendering} onClick={() => void handleStillExport("jpg")}>
+                  {t(language, "exportJpg")}
+                </button>
+                <button type="button" disabled={!image || isRendering} onClick={() => void handleStillExport("png")}>
+                  {t(language, "exportPng")}
+                </button>
+              </div>
+            </div>
+            <div className="export-group">
+              <p className="export-group-label">{t(language, "videoExportGroup")}</p>
+              <div className="export-actions export-actions-two">
+                <button type="button" disabled={!image || isRendering} onClick={() => void handleVideoExport()}>
+                  {t(language, "exportWebm")}
+                </button>
+                <button type="button" disabled={!image || isRendering} onClick={() => void handleGifExport()}>
+                  {t(language, "exportGif")}
+                </button>
+              </div>
             </div>
             <details className="advanced-panel export-advanced">
               <summary>{t(language, "advancedExport")}</summary>

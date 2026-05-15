@@ -51,7 +51,7 @@ describe("app editor flow", () => {
     mocks.downloadVideo.mockReset();
     mocks.exportGif.mockReset();
     mocks.exportStill.mockReset();
-    mocks.renderStillBlob.mockResolvedValue(new Blob(["still"], { type: "image/png" }));
+    mocks.renderStillBlob.mockImplementation(async (_image: HTMLImageElement, _state: unknown, type = "image/png") => new Blob(["still"], { type }));
     mocks.exportGif.mockImplementation(async ({ onProgress }: { onProgress?: (progress: number) => void }) => {
       onProgress?.(1);
       return new Blob(["gif"], { type: "image/gif" });
@@ -121,9 +121,22 @@ describe("app editor flow", () => {
     fireEvent.change(opacity, { target: { value: "0" } });
     expect(opacity.value).toBe("0");
 
+    await user.click(screen.getByRole("button", { name: "中文" }));
+
     const uploadInput = document.querySelector('input[type="file"]') as HTMLInputElement;
     await user.upload(uploadInput, new File(["image"], "sample.png", { type: "image/png" }));
     await waitFor(() => expect(screen.getByText("sample.png")).toBeTruthy());
+
+    const exportSection = screen.getByText("05 / 导出").closest(".panel-section") as HTMLElement;
+    expect(within(exportSection).getByText("图片")).toBeTruthy();
+    expect(within(exportSection).getByText("视频")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "JPG" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "PNG" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "WEBM" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "GIF" })).toBeTruthy();
+
+    const quality = screen.getByLabelText("导出质量") as HTMLSelectElement;
+    expect(quality.value).toBe("high");
 
     expect(screen.getByRole("button", { name: "GIF" })).toBeTruthy();
     const foldedLivpButton = screen.getByRole("button", { name: ".LIVP" });
@@ -139,11 +152,19 @@ describe("app editor flow", () => {
     expect(mocks.downloadVideo).not.toHaveBeenCalled();
     expect(mocks.downloadBlob).not.toHaveBeenCalled();
 
-    await user.click(screen.getByText("Advanced export"));
-    await user.click(screen.getByRole("button", { name: ".LIVP" }));
-    await waitFor(() => expect(mocks.downloadBlob).toHaveBeenCalledTimes(1));
+    await user.click(screen.getByRole("button", { name: "JPG" }));
+    await waitFor(() => expect(mocks.downloadBlob).toHaveBeenCalledWith(expect.any(Blob), "endfieldize.jpg"));
+    expect(mocks.renderStillBlob).toHaveBeenLastCalledWith(expect.any(TestImage), expect.any(Object), "image/jpeg", 0.94);
 
-    const [blob, filename] = mocks.downloadBlob.mock.calls[0] as [Blob, string];
+    await user.click(screen.getByRole("button", { name: "PNG" }));
+    await waitFor(() => expect(mocks.downloadBlob).toHaveBeenCalledWith(expect.any(Blob), "endfieldize.png"));
+    expect(mocks.renderStillBlob).toHaveBeenLastCalledWith(expect.any(TestImage), expect.any(Object), "image/png", undefined);
+
+    await user.click(screen.getByText("高级导出"));
+    await user.click(screen.getByRole("button", { name: ".LIVP" }));
+    await waitFor(() => expect(mocks.downloadBlob).toHaveBeenCalledTimes(3));
+
+    const [blob, filename] = mocks.downloadBlob.mock.calls[2] as [Blob, string];
     expect(blob.type).toBe("application/octet-stream");
     expect(filename).toBe("endfieldize.livp");
   });

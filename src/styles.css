@@ -335,6 +335,25 @@ input:disabled {
   gap: 10px;
 }
 
+.export-group {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.export-group-label {
+  margin: 0;
+  color: #8e98a5;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.export-actions-two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .export-actions button {
   height: 38px;
   border: 1px solid #f2f5f7;
