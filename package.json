@@ -1,11 +1,13 @@
 {
   "name": "endfieldize",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "tsc && vite build",
+    "build:cdn": "tsc && vite build",
+    "release:cdn": "node scripts/release-cdn.mjs",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest"
   },

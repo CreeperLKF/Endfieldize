@@ -14,3 +14,17 @@ Open the local Vite URL, upload a JPG or PNG, tune the controls, then export PNG
 ## MVP Boundary
 
 The MVP supports browser video export. Live Photo export is intentionally decoupled and can be added as a future exporter without changing the editor state model.
+
+## CDN Release
+
+CDN assets are published to the `cdn` branch by version directory, so jsDelivr can serve immutable release paths without committing `dist/` to `main`.
+
+```bash
+npm run release:cdn -- v0.2.0 --publish
+```
+
+The v0.2.0 CDN base is:
+
+```text
+https://cdn.jsdelivr.net/gh/CreeperLKF/Endfieldize@cdn/v0.2.0/
+```

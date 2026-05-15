@@ -4,6 +4,7 @@ dist/
 build/
 .vite/
 .cache/
+.cdn-dist/
 .superpowers/
 .worktrees/
 .env
