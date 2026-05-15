@@ -1,16 +1,37 @@
 import { describe, expect, it } from "vitest";
-import { applyTitlePreset, DEFAULT_TITLE, TITLE_PRESETS } from "../presets";
+import { applyTitlePreset, DEFAULT_TITLE, TITLE_PRESET_ORDER, TITLE_PRESETS } from "../presets";
 import { getTitleLayout } from "../lib/textLayout";
 
 describe("title presets", () => {
-  it("includes the required endfield title presets", () => {
-    expect(Object.keys(TITLE_PRESETS)).toEqual([
-      "hud-lower-left",
-      "center-cn",
-      "center-cn-en",
-      "sector-top-left",
-      "lower-right",
-    ]);
+  it("orders center title presets first", () => {
+    expect(TITLE_PRESET_ORDER).toEqual(["center-cn", "center-cn-en", "hud-lower-left", "sector-top-left", "lower-right"]);
+    expect(Object.keys(TITLE_PRESETS)).toEqual(["center-cn", "center-cn-en", "hud-lower-left", "sector-top-left", "lower-right"]);
+  });
+
+  it("uses a large centered Chinese title by default", () => {
+    expect(DEFAULT_TITLE).toMatchObject({
+      preset: "center-cn",
+      title: "武陵",
+      subtitle: "",
+      code: "",
+      position: "center",
+      alignment: "center",
+      scale: 1.58,
+      tracking: 0.04,
+      hudMarks: false,
+      shadowStrength: 0.34,
+    });
+
+    expect(TITLE_PRESETS["center-cn-en"]).toMatchObject({
+      preset: "center-cn-en",
+      position: "center",
+      alignment: "center",
+      scale: 1.48,
+      tracking: 0.03,
+      hudMarks: false,
+      shadowStrength: 0.34,
+      code: "",
+    });
   });
 
   it("applies a centered Chinese-English title preset", () => {

@@ -7,7 +7,7 @@ import { downloadGif, exportGif } from "./lib/exportGif";
 import { downloadVideo, exportVideo } from "./lib/exportVideo";
 import { classifyLivePhotoFiles, packageLivp } from "./lib/livePhoto";
 import { renderComposition } from "./lib/render";
-import { DEFAULT_STATE, GRADE_PRESET_ORDER, TITLE_PRESETS, applyGradePreset, applyTitlePreset, markGradeCustom } from "./presets";
+import { DEFAULT_STATE, GRADE_PRESET_ORDER, TITLE_PRESET_ORDER, applyGradePreset, applyTitlePreset, markGradeCustom } from "./presets";
 import type { LabelKey } from "./i18n";
 import type { AppState, EasingName, GradePresetName, OutputAspect, SourceKind, TitleColorMode, TitlePosition, TitlePresetName } from "./types";
 
@@ -790,7 +790,7 @@ export default function App() {
                   }))
                 }
               >
-                {Object.keys(TITLE_PRESETS).map((preset) => (
+                {TITLE_PRESET_ORDER.map((preset) => (
                   <option key={preset} value={preset}>
                     {preset.toUpperCase()}
                   </option>
@@ -828,8 +828,8 @@ export default function App() {
             <Slider
               label={t(language, "scale")}
               value={state.title.scale}
-              min={0.6}
-              max={1.6}
+              min={0.5}
+              max={2.6}
               step={0.01}
               disabled={isRendering}
               onChange={(value) =>
@@ -839,41 +839,6 @@ export default function App() {
                 }))
               }
             />
-            <label className="text-field">
-              <span>{t(language, "titleColor")}</span>
-              <select
-                value={state.title.colorMode}
-                disabled={isRendering}
-                onChange={(event) =>
-                  setState((current) => ({
-                    ...current,
-                    title: { ...current.title, colorMode: event.target.value as TitleColorMode },
-                  }))
-                }
-              >
-                {TITLE_COLOR_MODES.map((mode) => (
-                  <option key={mode} value={mode}>
-                    {titleColorLabels[language][mode]}
-                  </option>
-                ))}
-              </select>
-            </label>
-            {state.title.colorMode === "custom" ? (
-              <label className="color-field">
-                <span>{t(language, "customColor")}</span>
-                <input
-                  type="color"
-                  value={state.title.customColor}
-                  disabled={isRendering}
-                  onChange={(event) =>
-                    setState((current) => ({
-                      ...current,
-                      title: { ...current.title, customColor: event.target.value },
-                    }))
-                  }
-                />
-              </label>
-            ) : null}
             <details className="advanced-panel">
               <summary>{t(language, "advancedTitle")}</summary>
               <label className="text-field">
@@ -890,6 +855,41 @@ export default function App() {
                   }
                 />
               </label>
+              <label className="text-field">
+                <span>{t(language, "titleColor")}</span>
+                <select
+                  value={state.title.colorMode}
+                  disabled={isRendering}
+                  onChange={(event) =>
+                    setState((current) => ({
+                      ...current,
+                      title: { ...current.title, colorMode: event.target.value as TitleColorMode },
+                    }))
+                  }
+                >
+                  {TITLE_COLOR_MODES.map((mode) => (
+                    <option key={mode} value={mode}>
+                      {titleColorLabels[language][mode]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {state.title.colorMode === "custom" ? (
+                <label className="color-field">
+                  <span>{t(language, "customColor")}</span>
+                  <input
+                    type="color"
+                    value={state.title.customColor}
+                    disabled={isRendering}
+                    onChange={(event) =>
+                      setState((current) => ({
+                        ...current,
+                        title: { ...current.title, customColor: event.target.value },
+                      }))
+                    }
+                  />
+                </label>
+              ) : null}
               <label className="text-field">
                 <span>{t(language, "position")}</span>
                 <select

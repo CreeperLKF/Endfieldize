@@ -25,9 +25,8 @@ export const DEFAULT_GRADE: GradeState = {
   vignette: 0.15,
 };
 
-export const DEFAULT_TITLE: TitleState = {
+const BASE_TITLE: Omit<TitleState, "preset"> = {
   enabled: true,
-  preset: "hud-lower-left",
   title: "武陵",
   subtitle: "WULING CONTROL SECTOR",
   code: "WL-03 / 30.83N 111.00E",
@@ -45,6 +44,60 @@ export const DEFAULT_TITLE: TitleState = {
   offsetY: 0,
   shadowStrength: 0.34,
 };
+
+export const TITLE_PRESET_ORDER: TitlePresetName[] = ["center-cn", "center-cn-en", "hud-lower-left", "sector-top-left", "lower-right"];
+
+export const TITLE_PRESETS: Record<TitlePresetName, TitleState> = {
+  "center-cn": {
+    ...BASE_TITLE,
+    preset: "center-cn",
+    subtitle: "",
+    code: "",
+    position: "center",
+    alignment: "center",
+    scale: 1.58,
+    tracking: 0.04,
+    hudMarks: false,
+    shadowStrength: 0.34,
+  },
+  "center-cn-en": {
+    ...BASE_TITLE,
+    preset: "center-cn-en",
+    code: "",
+    position: "center",
+    alignment: "center",
+    scale: 1.48,
+    tracking: 0.03,
+    hudMarks: false,
+    shadowStrength: 0.34,
+  },
+  "hud-lower-left": {
+    ...BASE_TITLE,
+    preset: "hud-lower-left",
+  },
+  "sector-top-left": {
+    ...BASE_TITLE,
+    preset: "sector-top-left",
+    position: "top-left",
+    alignment: "left",
+    scale: 0.78,
+    tracking: 0.04,
+    opacity: 0.92,
+    hudMarks: true,
+    safeMargin: 0.045,
+  },
+  "lower-right": {
+    ...BASE_TITLE,
+    preset: "lower-right",
+    position: "lower-right",
+    alignment: "right",
+    scale: 0.95,
+    tracking: 0.01,
+    hudMarks: true,
+  },
+};
+
+export const DEFAULT_TITLE: TitleState = TITLE_PRESETS["center-cn"];
 
 export const DEFAULT_MOTION: MotionState = {
   enabled: true,
@@ -75,53 +128,6 @@ export const DEFAULT_STATE: AppState = {
     status: "idle",
     phase: "idle",
     error: "",
-  },
-};
-
-export const TITLE_PRESETS: Record<TitlePresetName, TitleState> = {
-  "hud-lower-left": DEFAULT_TITLE,
-  "center-cn": {
-    ...DEFAULT_TITLE,
-    preset: "center-cn",
-    subtitle: "",
-    code: "",
-    position: "center",
-    alignment: "center",
-    scale: 1.18,
-    tracking: 0.02,
-    lineWeight: 1,
-    hudMarks: false,
-    shadowStrength: 0.28,
-  },
-  "center-cn-en": {
-    ...DEFAULT_TITLE,
-    preset: "center-cn-en",
-    position: "center",
-    alignment: "center",
-    scale: 1.08,
-    tracking: 0.01,
-    hudMarks: false,
-    shadowStrength: 0.3,
-  },
-  "sector-top-left": {
-    ...DEFAULT_TITLE,
-    preset: "sector-top-left",
-    position: "top-left",
-    alignment: "left",
-    scale: 0.78,
-    tracking: 0.04,
-    opacity: 0.92,
-    hudMarks: true,
-    safeMargin: 0.045,
-  },
-  "lower-right": {
-    ...DEFAULT_TITLE,
-    preset: "lower-right",
-    position: "lower-right",
-    alignment: "right",
-    scale: 0.95,
-    tracking: 0.01,
-    hudMarks: true,
   },
 };
 

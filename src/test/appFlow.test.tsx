@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "../App";
@@ -82,6 +82,21 @@ describe("app editor flow", () => {
     render(<App />);
 
     expect(screen.queryByText("00 / PRESET")).toBeNull();
+    const titlePreset = screen.getByLabelText("标题预设") as HTMLSelectElement;
+    expect(titlePreset.value).toBe("center-cn");
+    expect([...titlePreset.options].map((option) => option.value)).toEqual([
+      "center-cn",
+      "center-cn-en",
+      "hud-lower-left",
+      "sector-top-left",
+      "lower-right",
+    ]);
+
+    const titleSection = screen.getByText("03 / 标题").closest(".panel-section") as HTMLElement;
+    const titleScale = within(titleSection).getByRole("slider", { name: /缩放/ }) as HTMLInputElement;
+    expect(titleScale.min).toBe("0.5");
+    expect(titleScale.max).toBe("2.6");
+
     const gradePreset = screen.getByLabelText("调色预设") as HTMLSelectElement;
     expect([...gradePreset.options].map((option) => option.textContent)).toEqual(["默认", "武陵 1", "武陵 2", "武陵 3", "自定义"]);
     expect(gradePreset.options[4].disabled).toBe(true);
@@ -89,14 +104,18 @@ describe("app editor flow", () => {
     fireEvent.change(screen.getByRole("slider", { name: /冷色调/ }), { target: { value: "0.8" } });
     expect(gradePreset.value).toBe("custom");
 
+    await user.click(screen.getByText("高级标题"));
+    const advancedTitle = screen.getByText("高级标题").closest("details") as HTMLDetailsElement;
+    expect(screen.getByLabelText("编号").closest("details")).toBe(advancedTitle);
+    expect(screen.getByLabelText("标题颜色").closest("details")).toBe(advancedTitle);
+
+    fireEvent.change(screen.getByLabelText("标题颜色"), { target: { value: "custom" } });
+    expect((screen.getByLabelText("自定义颜色") as HTMLInputElement).type).toBe("color");
+
     await user.click(screen.getByRole("button", { name: "English" }));
     expect(screen.getByRole("button", { name: "English" }).getAttribute("aria-pressed")).toBe("true");
     expect((screen.getByLabelText("Grade preset") as HTMLSelectElement).value).toBe("custom");
 
-    fireEvent.change(screen.getByLabelText("Title color"), { target: { value: "custom" } });
-    expect((screen.getByLabelText("Custom color") as HTMLInputElement).type).toBe("color");
-
-    await user.click(screen.getByText("Advanced title"));
     const opacity = screen.getByRole("slider", { name: /Opacity/ }) as HTMLInputElement;
     expect(opacity.min).toBe("0");
     fireEvent.change(opacity, { target: { value: "0" } });
