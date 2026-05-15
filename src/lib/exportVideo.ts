@@ -81,12 +81,9 @@ export async function exportVideo({ format, image, state, onProgress }: VideoExp
 
   try {
     recorder = new Recorder(stream, { mimeType, videoBitsPerSecond });
-  } catch (error) {
+  } catch {
     stopStream(stream);
-    if (format === "mp4") {
-      throw unsupportedVideoError(format);
-    }
-    throw error;
+    throw unsupportedVideoError(format);
   }
 
   const chunks: BlobPart[] = [];
