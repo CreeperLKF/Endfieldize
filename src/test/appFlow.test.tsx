@@ -151,6 +151,16 @@ describe("app editor flow", () => {
     const [gifBlob] = mocks.downloadGif.mock.calls[0] as [Blob];
     expect(gifBlob.type).toBe("image/gif");
     expect(mocks.exportGif).toHaveBeenCalledTimes(1);
+    expect(mocks.exportGif).toHaveBeenCalledWith(
+      expect.objectContaining({
+        state: expect.objectContaining({
+          export: expect.objectContaining({
+            format: "gif",
+            quality: "high",
+          }),
+        }),
+      }),
+    );
     expect(mocks.downloadVideo).not.toHaveBeenCalled();
     expect(mocks.downloadBlob).not.toHaveBeenCalled();
 

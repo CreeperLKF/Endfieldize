@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { encodeGifFromIndexedFrames, indexedColorTable, rgbToIndexedColor } from "../lib/exportGif";
+import { encodeGifFromIndexedFrames, imageDataToIndexedPixels, indexedColorTable, rgbToIndexedColor } from "../lib/exportGif";
 
 function readBlobBytes(blob: Blob): Promise<Uint8Array> {
   return new Promise((resolve, reject) => {
@@ -25,6 +25,23 @@ describe("gif export encoding", () => {
     expect(rgbToIndexedColor(0, 0, 255)).toBe(3);
   });
 
+  it("keeps non-white pixels during indexed conversion", () => {
+    const imageData = {
+      data: new Uint8ClampedArray([
+        0, 0, 0, 255,
+        255, 255, 255, 255,
+      ]),
+      width: 2,
+      height: 1,
+      colorSpace: "srgb",
+    } as ImageData;
+
+    const pixels = imageDataToIndexedPixels(imageData);
+
+    expect(pixels[0]).not.toBe(255);
+    expect(pixels[1]).toBe(255);
+  });
+
   it("encodes indexed animation frames into an image/gif blob", async () => {
     const result = encodeGifFromIndexedFrames({
       width: 2,
@@ -40,5 +57,20 @@ describe("gif export encoding", () => {
     expect(header).toBe("GIF89a");
     expect(bytes[bytes.length - 1]).toBe(0x3b);
     expect([...bytes].filter((byte) => byte === 0x2c)).toHaveLength(2);
+  });
+
+  it("does not request restore-to-background disposal for full frames", async () => {
+    const result = encodeGifFromIndexedFrames({
+      width: 1,
+      height: 1,
+      delayCentiseconds: 10,
+      frames: [new Uint8Array([0]), new Uint8Array([224])],
+    });
+
+    const bytes = await readBlobBytes(result);
+    const gceIndex = [...bytes].findIndex((byte, index, source) => byte === 0x21 && source[index + 1] === 0xf9);
+
+    expect(gceIndex).toBeGreaterThanOrEqual(0);
+    expect(bytes[gceIndex + 3]).toBe(0x00);
   });
 });

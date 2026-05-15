@@ -1,4 +1,5 @@
 import type { AppState } from "../types";
+import { exportStateForMotionQuality } from "./exportQuality";
 import { renderComposition } from "./render";
 
 export interface GifExportOptions {
@@ -64,7 +65,7 @@ export function indexedColorTable(): Uint8Array {
   return table;
 }
 
-function imageDataToIndexedPixels(imageData: ImageData): Uint8Array {
+export function imageDataToIndexedPixels(imageData: ImageData): Uint8Array {
   const pixels = new Uint8Array(imageData.width * imageData.height);
   const data = imageData.data;
 
@@ -181,7 +182,7 @@ export function encodeGifFromIndexedFrames({ width, height, delayCentiseconds, f
   bytes.push(0);
 
   for (const frame of frames) {
-    bytes.push(0x21, 0xf9, 0x04, 0x08);
+    bytes.push(0x21, 0xf9, 0x04, 0x00);
     writeUint16(bytes, safeDelay);
     bytes.push(0, 0);
 
@@ -202,22 +203,26 @@ export function encodeGifFromIndexedFrames({ width, height, delayCentiseconds, f
 }
 
 export async function exportGif({ image, state, onProgress = () => {} }: GifExportOptions): Promise<Blob> {
+  const exportState = exportStateForMotionQuality({
+    ...state,
+    export: { ...state.export, format: "gif" },
+  });
   const canvas = document.createElement("canvas");
-  canvas.width = state.export.width;
-  canvas.height = state.export.height;
+  canvas.width = exportState.export.width;
+  canvas.height = exportState.export.height;
 
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
   if (!ctx) {
     throw new Error("Canvas 2D context is unavailable");
   }
 
-  const fps = Math.max(1, Math.round(state.motion.fps));
-  const totalFrames = Math.max(1, Math.round(state.motion.durationSeconds * fps));
+  const fps = Math.max(1, Math.round(exportState.motion.fps));
+  const totalFrames = Math.max(1, Math.round(exportState.motion.durationSeconds * fps));
   const frames: Uint8Array[] = [];
 
   for (let frame = 0; frame <= totalFrames; frame += 1) {
     const progress = frame / totalFrames;
-    renderComposition({ canvas, image, state, frameProgress: progress });
+    renderComposition({ canvas, image, state: exportState, frameProgress: progress });
     frames.push(imageDataToIndexedPixels(ctx.getImageData(0, 0, canvas.width, canvas.height)));
     onProgress(progress * 0.94);
 
