@@ -9,7 +9,7 @@ npm install
 npm run dev
 ```
 
-Open the local Vite URL, upload a JPG or PNG, tune the controls, then export PNG, WebM, or GIF. Experimental .LIVP export is available under Advanced export.
+Open the local Vite URL, upload a JPG or PNG, tune the controls, then export JPG/PNG stills or MP4/GIF motion. WEBM and experimental .LIVP export are available under Advanced export.
 
 ## MVP Boundary
 
