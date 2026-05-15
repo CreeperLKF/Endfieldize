@@ -47,6 +47,11 @@ describe("grade presets", () => {
     expect(DEFAULT_STATE.motion.durationSeconds).toBe(4);
   });
 
+  it("uses a 1.10 default end scale and 24 fps motion baseline", () => {
+    expect(DEFAULT_STATE.motion.endScale).toBe(1.1);
+    expect(DEFAULT_STATE.motion.fps).toBe(24);
+  });
+
   it("applying a grade preset does not overwrite source, title, motion, language, or export settings", () => {
     const state = applyGradePreset(
       {

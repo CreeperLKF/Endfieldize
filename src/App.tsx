@@ -2,11 +2,12 @@ import { Upload } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, DragEvent } from "react";
 import { exportPhaseLabels, gradePresetLabels, t, titleColorLabels } from "./i18n";
+import { downloadGif, exportGif } from "./lib/exportGif";
 import { downloadBlob, renderStillBlob } from "./lib/exportStill";
 import { jpegQualityForExport } from "./lib/exportQuality";
-import { downloadGif, exportGif } from "./lib/exportGif";
 import { downloadVideo, exportVideo, type VideoExportFormat } from "./lib/exportVideo";
 import { classifyLivePhotoFiles, packageLivp } from "./lib/livePhoto";
+import { DEFAULT_PREVIEW_LONG_EDGE, outputSizeForAspect, outputSizeForState } from "./lib/outputSize";
 import { renderComposition } from "./lib/render";
 import { DEFAULT_STATE, GRADE_PRESET_ORDER, TITLE_PRESET_ORDER, applyGradePreset, applyTitlePreset, markGradeCustom } from "./presets";
 import type { LabelKey } from "./i18n";
@@ -139,7 +140,12 @@ export default function App() {
   const isRendering = state.export.status === "rendering";
   const language = state.language;
   const canRender = Boolean(image && state.sourceImage);
-  const previewSize = useMemo(() => ({ width: 1280, height: 720 }), []);
+  const exportSize = useMemo(() => outputSizeForState(state), [state]);
+  const sourceForPreview = state.sourceImage ?? state.sourceVideo;
+  const previewSize = useMemo(
+    () => outputSizeForAspect(DEFAULT_PREVIEW_LONG_EDGE, state.motion.outputAspect, sourceForPreview?.width, sourceForPreview?.height),
+    [sourceForPreview?.height, sourceForPreview?.width, state.motion.outputAspect],
+  );
   const compositionState = useMemo<AppState>(
     () => ({
       sourceKind: state.sourceKind,
@@ -152,8 +158,8 @@ export default function App() {
       export: {
         format: state.export.format,
         quality: state.export.quality,
-        width: state.export.width,
-        height: state.export.height,
+        width: exportSize.width,
+        height: exportSize.height,
         progress: 0,
         status: "idle",
         phase: "idle",
@@ -170,8 +176,8 @@ export default function App() {
       state.motion,
       state.export.format,
       state.export.quality,
-      state.export.width,
-      state.export.height,
+      exportSize.width,
+      exportSize.height,
     ],
   );
 
@@ -331,7 +337,7 @@ export default function App() {
     const quality = format === "jpg" ? jpegQualityForExport(state.export.quality) : undefined;
     const exportState: AppState = {
       ...state,
-      export: { ...state.export, format },
+      export: { ...state.export, format, width: exportSize.width, height: exportSize.height },
     };
 
     setState((current) => ({
@@ -371,7 +377,7 @@ export default function App() {
 
     const exportState: AppState = {
       ...state,
-      export: { ...state.export, format },
+      export: { ...state.export, format, width: exportSize.width, height: exportSize.height },
     };
 
     setState((current) => ({
@@ -418,7 +424,7 @@ export default function App() {
 
     const exportState: AppState = {
       ...state,
-      export: { ...state.export, format: "gif" },
+      export: { ...state.export, format: "gif", width: exportSize.width, height: exportSize.height },
     };
 
     setState((current) => ({
@@ -439,7 +445,7 @@ export default function App() {
         },
       });
 
-      downloadGif(blob);
+      downloadGif(blob, "endfieldize.gif");
       setState((current) => ({
         ...current,
         export: { ...current.export, progress: 1, status: "done", phase: "done" },
@@ -472,9 +478,12 @@ export default function App() {
       const motionName = "motion.webm";
       const motionExportState: AppState = {
         ...state,
-        export: { ...state.export, format: "webm" },
+        export: { ...state.export, format: "webm", width: exportSize.width, height: exportSize.height },
       };
-      const stillBlob = await renderStillBlob(image, state);
+      const stillBlob = await renderStillBlob(image, {
+        ...state,
+        export: { ...state.export, width: exportSize.width, height: exportSize.height },
+      });
       setState((current) => ({
         ...current,
         export: { ...current.export, progress: 0.2, phase: "rendering-motion" },
@@ -586,7 +595,11 @@ export default function App() {
           }}
           onDrop={handleDrop}
         >
-          <canvas ref={canvasRef} className={canRender ? "preview-canvas" : "preview-canvas is-empty"} />
+          <canvas
+            ref={canvasRef}
+            className={canRender ? "preview-canvas" : "preview-canvas is-empty"}
+            style={{ "--preview-aspect": `${previewSize.width} / ${previewSize.height}` } as CSSProperties}
+          />
           {!canRender && <div className="empty-preview">{t(language, "dropImage")}</div>}
         </div>
 
@@ -875,6 +888,20 @@ export default function App() {
                 }
               />
             </label>
+            <label className="text-field">
+              <span>{t(language, "code")}</span>
+              <input
+                type="text"
+                value={state.title.code}
+                disabled={isRendering}
+                onChange={(event) =>
+                  setState((current) => ({
+                    ...current,
+                    title: { ...current.title, code: event.target.value },
+                  }))
+                }
+              />
+            </label>
             <Slider
               label={t(language, "scale")}
               value={state.title.scale}
@@ -891,20 +918,6 @@ export default function App() {
             />
             <details className="advanced-panel">
               <summary>{t(language, "advancedTitle")}</summary>
-              <label className="text-field">
-                <span>{t(language, "code")}</span>
-                <input
-                  type="text"
-                  value={state.title.code}
-                  disabled={isRendering}
-                  onChange={(event) =>
-                    setState((current) => ({
-                      ...current,
-                      title: { ...current.title, code: event.target.value },
-                    }))
-                  }
-                />
-              </label>
               <label className="text-field">
                 <span>{t(language, "titleColor")}</span>
                 <select
@@ -963,7 +976,7 @@ export default function App() {
                 label={t(language, "tracking")}
                 value={state.title.tracking}
                 min={0}
-                max={0.16}
+                max={0.5}
                 step={0.01}
                 disabled={isRendering}
                 onChange={(value) =>
@@ -1197,8 +1210,12 @@ export default function App() {
           <div className="panel-section">
             <p className="eyebrow">05 / {t(language, "export").toUpperCase()}</p>
             <label className="text-field">
-              <span>{t(language, "exportQuality")}</span>
+              <span className="label-with-note">
+                {t(language, "exportQuality")}
+                <small>{t(language, "exportQualityHint")}</small>
+              </span>
               <select
+                aria-label={t(language, "exportQuality")}
                 value={state.export.quality}
                 disabled={isRendering}
                 onChange={(event) =>
@@ -1257,6 +1274,21 @@ export default function App() {
           {state.export.error && <p className="status-error">{state.export.error}</p>}
         </aside>
       </section>
+
+      <footer className="site-footer">
+        <span>Powered By </span>
+        <a target="_blank" rel="noreferrer" href="https://github.com/CreeperLKF/Endfieldize">
+          CreeperLKF/Endfieldize
+        </a>
+        <span> | Inspired by </span>
+        <a target="_blank" rel="noreferrer" href="https://www.bilibili.com/video/BV19WwqzEEUk">
+          骆驼肉
+        </a>
+        <span> | </span>
+        <a className="icp" target="_blank" rel="noreferrer" href="https://beian.miit.gov.cn/">
+          京ICP备2024091870号-1
+        </a>
+      </footer>
     </main>
   );
 }

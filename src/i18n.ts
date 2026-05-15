@@ -78,6 +78,7 @@ export type LabelKey =
   | "exportGif"
   | "exportLivp"
   | "exportQuality"
+  | "exportQualityHint"
   | "exportQualitySmall"
   | "exportQualityStandard"
   | "exportQualityHigh"
@@ -175,6 +176,7 @@ export const labels = {
     exportGif: "GIF",
     exportLivp: ".LIVP",
     exportQuality: "导出质量",
+    exportQualityHint: "GIF 推荐小，其它推荐高质量",
     exportQualitySmall: "小",
     exportQualityStandard: "标准",
     exportQualityHigh: "高质量",
@@ -186,7 +188,7 @@ export const labels = {
     canvasUnavailable: "Canvas 2D 上下文不可用",
     stillExportFailed: "静帧导出失败",
     mp4ExportFailed: "MP4 导出失败",
-    mp4Unsupported: "当前浏览器不支持 MP4 导出。请在高级导出中使用 WEBM，或导出 GIF。",
+    mp4Unsupported: "当前浏览器不支持 MP4 导出。请在高级导出中使用 WEBM。",
     videoExportFailed: "视频导出失败",
     livePairExportFailed: "Live Photo 导出失败",
     gifExportFailed: "GIF 导出失败",
@@ -271,6 +273,7 @@ export const labels = {
     exportGif: "GIF",
     exportLivp: ".LIVP",
     exportQuality: "Export quality",
+    exportQualityHint: "Small for GIF, High for others",
     exportQualitySmall: "Small",
     exportQualityStandard: "Standard",
     exportQualityHigh: "High",
@@ -282,7 +285,7 @@ export const labels = {
     canvasUnavailable: "Canvas 2D context is unavailable",
     stillExportFailed: "Still export failed",
     mp4ExportFailed: "MP4 export failed",
-    mp4Unsupported: "MP4 export is not supported in this browser. Use Advanced WEBM or GIF.",
+    mp4Unsupported: "MP4 export is not supported in this browser. Use Advanced WEBM.",
     videoExportFailed: "Video export failed",
     livePairExportFailed: "Live Photo export failed",
     gifExportFailed: "GIF export failed",

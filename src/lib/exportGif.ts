@@ -1,12 +1,36 @@
 import type { AppState } from "../types";
 import { exportStateForMotionQuality } from "./exportQuality";
+import { frameProgress, videoFramePlan } from "./exportVideo";
 import { renderComposition } from "./render";
 
 export interface GifExportOptions {
   image: HTMLImageElement;
   state: AppState;
   onProgress?: (progress: number) => void;
+  gifEncoderLoader?: GifEncoderLoader;
 }
+
+type GifPalette = number[][];
+interface GifEncoderModule {
+  GIFEncoder: () => {
+    writeFrame(
+      index: Uint8Array,
+      width: number,
+      height: number,
+      options?: {
+        palette?: GifPalette;
+        delay?: number;
+        repeat?: number;
+        dispose?: number;
+      },
+    ): void;
+    finish(): void;
+    bytes(): Uint8Array;
+  };
+  quantize(rgba: Uint8Array | Uint8ClampedArray, maxColors: number, options?: { format?: "rgb444" | "rgb565" }): GifPalette;
+  applyPalette(rgba: Uint8Array | Uint8ClampedArray, palette: GifPalette, format?: "rgb444" | "rgb565"): Uint8Array;
+}
+type GifEncoderLoader = () => Promise<GifEncoderModule>;
 
 export interface IndexedGifInput {
   width: number;
@@ -24,6 +48,10 @@ function wait(ms: number): Promise<void> {
   return new Promise((resolve) => {
     window.setTimeout(resolve, ms);
   });
+}
+
+function defaultGifEncoderLoader(): Promise<GifEncoderModule> {
+  return import("gifenc");
 }
 
 function writeString(bytes: number[], value: string): void {
@@ -202,7 +230,7 @@ export function encodeGifFromIndexedFrames({ width, height, delayCentiseconds, f
   return new Blob([new Uint8Array(bytes)], { type: "image/gif" });
 }
 
-export async function exportGif({ image, state, onProgress = () => {} }: GifExportOptions): Promise<Blob> {
+export async function exportGif({ image, state, onProgress = () => {}, gifEncoderLoader = defaultGifEncoderLoader }: GifExportOptions): Promise<Blob> {
   const exportState = exportStateForMotionQuality({
     ...state,
     export: { ...state.export, format: "gif" },
@@ -217,31 +245,37 @@ export async function exportGif({ image, state, onProgress = () => {} }: GifExpo
   }
 
   const fps = Math.max(1, Math.round(exportState.motion.fps));
-  const totalFrames = Math.max(1, Math.round(exportState.motion.durationSeconds * fps));
-  const frames: Uint8Array[] = [];
+  const plan = videoFramePlan(exportState.motion.durationSeconds, fps);
+  const { GIFEncoder, applyPalette, quantize } = await gifEncoderLoader();
+  const gif = GIFEncoder();
 
-  for (let frame = 0; frame <= totalFrames; frame += 1) {
-    const progress = frame / totalFrames;
+  for (let frame = 0; frame < plan.frameCount; frame += 1) {
+    const progress = frameProgress(frame, plan.frameCount);
     renderComposition({ canvas, image, state: exportState, frameProgress: progress });
-    frames.push(imageDataToIndexedPixels(ctx.getImageData(0, 0, canvas.width, canvas.height)));
-    onProgress(progress * 0.94);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const palette = quantize(imageData.data, 256, { format: "rgb444" });
+    const indexedPixels = applyPalette(imageData.data, palette, "rgb444");
+    gif.writeFrame(indexedPixels, canvas.width, canvas.height, {
+      palette,
+      delay: plan.frameDurationMs,
+      repeat: 0,
+      dispose: -1,
+    });
+    onProgress(Math.min(0.98, ((frame + 1) / plan.frameCount) * 0.98));
 
     if (frame % 4 === 0) {
       await wait(0);
     }
   }
 
-  onProgress(0.97);
-  const delayCentiseconds = Math.max(1, Math.round(100 / fps));
-  const gif = encodeGifFromIndexedFrames({
-    width: canvas.width,
-    height: canvas.height,
-    delayCentiseconds,
-    frames,
-  });
+  gif.finish();
+  const bytes = gif.bytes();
+  const buffer = new ArrayBuffer(bytes.byteLength);
+  new Uint8Array(buffer).set(bytes);
+  const blob = new Blob([buffer], { type: "image/gif" });
   onProgress(1);
 
-  return gif;
+  return blob;
 }
 
 export function downloadGif(blob: Blob, filename = "endfieldize.gif"): void {

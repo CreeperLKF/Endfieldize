@@ -201,7 +201,7 @@ h1 {
 .preview-canvas {
   width: min(100%, 1280px);
   max-height: calc(100vh - 156px);
-  aspect-ratio: 16 / 9;
+  aspect-ratio: var(--preview-aspect, 16 / 9);
   border: 1px solid #555b64;
   background: #07080a;
   object-fit: contain;
@@ -297,6 +297,19 @@ input:disabled {
   padding: 0 10px;
   color: #f2f5f7;
   background: #11151b;
+}
+
+.label-with-note {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.label-with-note small {
+  color: #8e98a5;
+  font-size: 11px;
+  font-weight: 600;
 }
 
 .color-field {
@@ -402,6 +415,31 @@ input:disabled {
   color: #ff6b57;
 }
 
+.site-footer {
+  padding: 10px 24px 18px;
+  border-top: 1px solid rgba(243, 239, 228, 0.1);
+  color: rgba(174, 183, 194, 0.72);
+  background: rgba(8, 10, 13, 0.94);
+  font-size: 11px;
+  line-height: 1.5;
+  overflow-x: auto;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.site-footer a {
+  color: rgba(243, 239, 228, 0.82);
+  text-decoration: none;
+}
+
+.site-footer a:hover {
+  color: #f0b24a;
+}
+
+.site-footer .icp {
+  color: rgba(174, 183, 194, 0.72);
+}
+
 @media (max-width: 900px) {
   .topbar {
     align-items: flex-start;
@@ -436,22 +474,6 @@ input:disabled {
 }
 
 @media (max-width: 560px) and (orientation: portrait) {
-  .preview-stage::before {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    right: 12px;
-    z-index: 1;
-    border: 1px solid rgba(240, 178, 74, 0.5);
-    padding: 8px 10px;
-    color: #f0b24a;
-    background: rgba(8, 10, 13, 0.82);
-    content: var(--landscape-copy);
-    font-size: 11px;
-    font-weight: 800;
-    text-align: center;
-  }
-
   .field-row {
     grid-template-columns: 72px minmax(0, 1fr) 44px;
   }
@@ -472,5 +494,23 @@ input:disabled {
 
   .export-actions {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) and (orientation: portrait) and (min-height: 901px) {
+  .preview-stage::before {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    z-index: 1;
+    border: 1px solid rgba(240, 178, 74, 0.5);
+    padding: 8px 10px;
+    color: #f0b24a;
+    background: rgba(8, 10, 13, 0.82);
+    content: var(--landscape-copy);
+    font-size: 11px;
+    font-weight: 800;
+    text-align: center;
   }
 }

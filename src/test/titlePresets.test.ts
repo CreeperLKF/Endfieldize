@@ -3,21 +3,21 @@ import { applyTitlePreset, DEFAULT_TITLE, TITLE_PRESET_ORDER, TITLE_PRESETS } fr
 import { getTitleLayout } from "../lib/textLayout";
 
 describe("title presets", () => {
-  it("orders center title presets first", () => {
-    expect(TITLE_PRESET_ORDER).toEqual(["center-cn", "center-cn-en", "hud-lower-left", "sector-top-left", "lower-right"]);
+  it("orders bilingual center before Chinese-only center", () => {
+    expect(TITLE_PRESET_ORDER).toEqual(["center-cn-en", "center-cn", "hud-lower-left", "sector-top-left", "lower-right"]);
     expect(Object.keys(TITLE_PRESETS)).toEqual(["center-cn", "center-cn-en", "hud-lower-left", "sector-top-left", "lower-right"]);
   });
 
-  it("uses a large centered Chinese title by default", () => {
+  it("uses a large centered Chinese-English title by default", () => {
     expect(DEFAULT_TITLE).toMatchObject({
-      preset: "center-cn",
+      preset: "center-cn-en",
       title: "武陵",
-      subtitle: "",
+      subtitle: "WULING CONTROL SECTOR",
       code: "",
       position: "center",
       alignment: "center",
-      scale: 1.58,
-      tracking: 0.04,
+      scale: 1.48,
+      tracking: 0.15,
       hudMarks: false,
       shadowStrength: 0.34,
     });
@@ -27,7 +27,7 @@ describe("title presets", () => {
       position: "center",
       alignment: "center",
       scale: 1.48,
-      tracking: 0.03,
+      tracking: 0.15,
       hudMarks: false,
       shadowStrength: 0.34,
       code: "",
@@ -35,7 +35,7 @@ describe("title presets", () => {
   });
 
   it("applies a centered Chinese-English title preset", () => {
-    const title = applyTitlePreset(DEFAULT_TITLE, "center-cn-en");
+    const title = applyTitlePreset({ ...DEFAULT_TITLE, preset: "center-cn", subtitle: "" }, "center-cn-en");
 
     expect(title.preset).toBe("center-cn-en");
     expect(title.position).toBe("center");
@@ -47,7 +47,7 @@ describe("title presets", () => {
     const layout = getTitleLayout(
       {
         ...DEFAULT_TITLE,
-        preset: "center-cn",
+        preset: "center-cn-en",
         position: "center",
         alignment: "center",
         scale: 1,

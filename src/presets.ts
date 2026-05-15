@@ -35,7 +35,7 @@ const BASE_TITLE: Omit<TitleState, "preset"> = {
   colorMode: "white",
   customColor: "#f7f8f5",
   scale: 1,
-  tracking: 0,
+  tracking: 0.15,
   opacity: 0.96,
   lineWeight: 1,
   hudMarks: true,
@@ -45,7 +45,7 @@ const BASE_TITLE: Omit<TitleState, "preset"> = {
   shadowStrength: 0.34,
 };
 
-export const TITLE_PRESET_ORDER: TitlePresetName[] = ["center-cn", "center-cn-en", "hud-lower-left", "sector-top-left", "lower-right"];
+export const TITLE_PRESET_ORDER: TitlePresetName[] = ["center-cn-en", "center-cn", "hud-lower-left", "sector-top-left", "lower-right"];
 
 export const TITLE_PRESETS: Record<TitlePresetName, TitleState> = {
   "center-cn": {
@@ -56,7 +56,6 @@ export const TITLE_PRESETS: Record<TitlePresetName, TitleState> = {
     position: "center",
     alignment: "center",
     scale: 1.58,
-    tracking: 0.04,
     hudMarks: false,
     shadowStrength: 0.34,
   },
@@ -67,7 +66,6 @@ export const TITLE_PRESETS: Record<TitlePresetName, TitleState> = {
     position: "center",
     alignment: "center",
     scale: 1.48,
-    tracking: 0.03,
     hudMarks: false,
     shadowStrength: 0.34,
   },
@@ -81,7 +79,6 @@ export const TITLE_PRESETS: Record<TitlePresetName, TitleState> = {
     position: "top-left",
     alignment: "left",
     scale: 0.78,
-    tracking: 0.04,
     opacity: 0.92,
     hudMarks: true,
     safeMargin: 0.045,
@@ -92,23 +89,22 @@ export const TITLE_PRESETS: Record<TitlePresetName, TitleState> = {
     position: "lower-right",
     alignment: "right",
     scale: 0.95,
-    tracking: 0.01,
     hudMarks: true,
   },
 };
 
-export const DEFAULT_TITLE: TitleState = TITLE_PRESETS["center-cn"];
+export const DEFAULT_TITLE: TitleState = TITLE_PRESETS["center-cn-en"];
 
 export const DEFAULT_MOTION: MotionState = {
   enabled: true,
   durationSeconds: 4,
-  fps: 30,
+  fps: 24,
   startScale: 1,
-  endScale: 1.08,
+  endScale: 1.1,
   focusX: 0.5,
   focusY: 0.5,
   easing: "ease-in-out",
-  outputAspect: "16:9",
+  outputAspect: "source",
 };
 
 export const DEFAULT_STATE: AppState = {
