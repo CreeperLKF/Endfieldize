@@ -146,6 +146,7 @@ export default function App() {
       motion: state.motion,
       export: {
         format: state.export.format,
+        quality: state.export.quality,
         width: state.export.width,
         height: state.export.height,
         progress: 0,
@@ -163,6 +164,7 @@ export default function App() {
       state.title,
       state.motion,
       state.export.format,
+      state.export.quality,
       state.export.width,
       state.export.height,
     ],

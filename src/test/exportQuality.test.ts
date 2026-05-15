@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  EXPORT_QUALITY_SETTINGS,
   exportStateForMotionQuality,
   jpegQualityForExport,
   videoBitsPerSecondForExport,
@@ -19,9 +18,9 @@ describe("export quality profiles", () => {
   });
 
   it("maps video bitrate to each quality profile", () => {
-    expect(videoBitsPerSecondForExport("small")).toBe(EXPORT_QUALITY_SETTINGS.small.videoBitsPerSecond);
-    expect(videoBitsPerSecondForExport("standard")).toBe(EXPORT_QUALITY_SETTINGS.standard.videoBitsPerSecond);
-    expect(videoBitsPerSecondForExport("high")).toBe(EXPORT_QUALITY_SETTINGS.high.videoBitsPerSecond);
+    expect(videoBitsPerSecondForExport("small")).toBe(2_000_000);
+    expect(videoBitsPerSecondForExport("standard")).toBe(4_000_000);
+    expect(videoBitsPerSecondForExport("high")).toBe(8_000_000);
   });
 
   it("creates even scaled dimensions and low effective fps for motion exports", () => {
