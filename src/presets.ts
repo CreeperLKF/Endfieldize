@@ -67,7 +67,8 @@ export const DEFAULT_STATE: AppState = {
   title: DEFAULT_TITLE,
   motion: DEFAULT_MOTION,
   export: {
-    format: "webm",
+    format: "mp4",
+    quality: "high",
     width: 1920,
     height: 1080,
     progress: 0,

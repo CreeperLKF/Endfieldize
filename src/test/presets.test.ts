@@ -6,7 +6,8 @@ type Expect<T extends true> = T;
 type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 type IsRequired<T, K extends keyof T> = {} extends Pick<T, K> ? false : true;
 
-type _ExportFormatContract = Expect<Equal<ExportState["format"], "png" | "webm" | "gif" | "livp">>;
+type _ExportFormatContract = Expect<Equal<ExportState["format"], "jpg" | "png" | "mp4" | "gif" | "webm" | "livp">>;
+type _ExportQualityRequired = Expect<IsRequired<ExportState, "quality">>;
 type _ExportPhaseRequired = Expect<IsRequired<ExportState, "phase">>;
 type _AppLanguageRequired = Expect<IsRequired<AppState, "language">>;
 

@@ -5,6 +5,8 @@ export type TitleAlignment = "left" | "center" | "right";
 export type TitleColorMode = "white" | "black" | "custom" | "contrast";
 export type EasingName = "linear" | "ease-in-out" | "cinematic";
 export type OutputAspect = "source" | "16:9" | "9:16" | "1:1";
+export type ExportFormat = "jpg" | "png" | "mp4" | "gif" | "webm" | "livp";
+export type ExportQuality = "small" | "standard" | "high";
 export type ExportStatus = "idle" | "rendering" | "done" | "failed";
 export type ExportPhase = "idle" | "preparing-still" | "rendering-motion" | "encoding-gif" | "packaging-live-photo" | "downloading" | "done" | "failed";
 export type SourceKind = "image" | "live-pair" | "video-only";
@@ -85,7 +87,8 @@ export interface MotionState {
 }
 
 export interface ExportState {
-  format: "png" | "webm" | "gif" | "livp";
+  format: ExportFormat;
+  quality: ExportQuality;
   width: number;
   height: number;
   progress: number;
