@@ -5,7 +5,7 @@ import { exportPhaseLabels, gradePresetLabels, t, titleColorLabels } from "./i18
 import { downloadBlob, renderStillBlob } from "./lib/exportStill";
 import { jpegQualityForExport } from "./lib/exportQuality";
 import { downloadGif, exportGif } from "./lib/exportGif";
-import { downloadVideo, exportVideo } from "./lib/exportVideo";
+import { downloadVideo, exportVideo, type VideoExportFormat } from "./lib/exportVideo";
 import { classifyLivePhotoFiles, packageLivp } from "./lib/livePhoto";
 import { renderComposition } from "./lib/render";
 import { DEFAULT_STATE, GRADE_PRESET_ORDER, TITLE_PRESET_ORDER, applyGradePreset, applyTitlePreset, markGradeCustom } from "./presets";
@@ -23,6 +23,7 @@ const INTERNAL_ERROR_LABELS: Record<string, LabelKey> = {
   "No previewable media found": "noPreviewableMedia",
   "Canvas 2D context is unavailable": "canvasUnavailable",
   "Still export failed": "stillExportFailed",
+  "MP4 video recording is unavailable in this browser": "mp4Unsupported",
 };
 
 function localizedErrorMessage(language: AppState["language"], error: unknown, fallbackKey: LabelKey): string {
@@ -363,21 +364,27 @@ export default function App() {
     }
   }
 
-  async function handleVideoExport() {
+  async function handleVideoExport(format: VideoExportFormat) {
     if (!image || isRendering) {
       return;
     }
 
+    const exportState: AppState = {
+      ...state,
+      export: { ...state.export, format },
+    };
+
     setState((current) => ({
       ...current,
-      export: { ...current.export, format: "webm", progress: 0, status: "rendering", phase: "rendering-motion", error: "" },
+      export: { ...current.export, format, progress: 0, status: "rendering", phase: "rendering-motion", error: "" },
     }));
     uploadRequestRef.current += 1;
 
     try {
       const blob = await exportVideo({
+        format,
         image,
-        state,
+        state: exportState,
         onProgress: (progress) => {
           setState((current) => ({
             ...current,
@@ -386,7 +393,7 @@ export default function App() {
         },
       });
 
-      downloadVideo(blob);
+      downloadVideo(blob, `endfieldize.${format}`);
       setState((current) => ({
         ...current,
         export: { ...current.export, progress: 1, status: "done", phase: "done" },
@@ -398,7 +405,7 @@ export default function App() {
           ...current.export,
           status: "failed",
           phase: "failed",
-          error: localizedErrorMessage(language, error, "videoExportFailed"),
+          error: localizedErrorMessage(language, error, format === "mp4" ? "mp4ExportFailed" : "videoExportFailed"),
         },
       }));
     }
@@ -463,14 +470,19 @@ export default function App() {
     try {
       const stillName = "still.png";
       const motionName = "motion.webm";
+      const motionExportState: AppState = {
+        ...state,
+        export: { ...state.export, format: "webm" },
+      };
       const stillBlob = await renderStillBlob(image, state);
       setState((current) => ({
         ...current,
         export: { ...current.export, progress: 0.2, phase: "rendering-motion" },
       }));
       const motionBlob = await exportVideo({
+        format: "webm",
         image,
-        state,
+        state: motionExportState,
         onProgress: (progress) => {
           setState((current) => ({
             ...current,
@@ -1217,8 +1229,8 @@ export default function App() {
             <div className="export-group">
               <p className="export-group-label">{t(language, "videoExportGroup")}</p>
               <div className="export-actions export-actions-two">
-                <button type="button" disabled={!image || isRendering} onClick={() => void handleVideoExport()}>
-                  {t(language, "exportWebm")}
+                <button type="button" disabled={!image || isRendering} onClick={() => void handleVideoExport("mp4")}>
+                  {t(language, "exportMp4")}
                 </button>
                 <button type="button" disabled={!image || isRendering} onClick={() => void handleGifExport()}>
                   {t(language, "exportGif")}
@@ -1228,6 +1240,9 @@ export default function App() {
             <details className="advanced-panel export-advanced">
               <summary>{t(language, "advancedExport")}</summary>
               <div className="export-actions export-actions-secondary">
+                <button type="button" disabled={!image || isRendering} onClick={() => void handleVideoExport("webm")}>
+                  {t(language, "exportWebm")}
+                </button>
                 <button type="button" disabled={!image || isRendering} onClick={() => void handleLivePairExport()}>
                   {t(language, "exportLivp")}
                 </button>

@@ -77,7 +77,7 @@ describe("app editor flow", () => {
     vi.unstubAllGlobals();
   });
 
-  it("keeps presets in grade, localizes controls, exports gif, and folds livp into advanced export", async () => {
+  it("keeps presets in grade, localizes controls, exports gif, and folds webm and livp into advanced export", async () => {
     const user = userEvent.setup();
     render(<App />);
 
@@ -132,15 +132,17 @@ describe("app editor flow", () => {
     expect(within(exportSection).getByText("视频")).toBeTruthy();
     expect(screen.getByRole("button", { name: "JPG" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "PNG" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "WEBM" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "MP4" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "GIF" })).toBeTruthy();
 
     const quality = screen.getByLabelText("导出质量") as HTMLSelectElement;
     expect(quality.value).toBe("high");
 
     expect(screen.getByRole("button", { name: "GIF" })).toBeTruthy();
+    const foldedWebmButton = screen.getByRole("button", { name: "WEBM", hidden: true });
     const foldedLivpButton = screen.getByRole("button", { name: ".LIVP" });
-    const advancedExport = foldedLivpButton.closest("details") as HTMLDetailsElement;
+    const advancedExport = foldedWebmButton.closest("details") as HTMLDetailsElement;
+    expect(foldedLivpButton.closest("details")).toBe(advancedExport);
     expect(advancedExport.open).toBe(false);
 
     await user.click(screen.getByRole("button", { name: "GIF" }));
@@ -161,11 +163,32 @@ describe("app editor flow", () => {
     expect(mocks.renderStillBlob).toHaveBeenLastCalledWith(expect.any(TestImage), expect.any(Object), "image/png", undefined);
 
     await user.click(screen.getByText("高级导出"));
+    await user.click(screen.getByRole("button", { name: "WEBM" }));
+    await waitFor(() => expect(mocks.downloadVideo).toHaveBeenCalledWith(expect.any(Blob), "endfieldize.webm"));
+
     await user.click(screen.getByRole("button", { name: ".LIVP" }));
     await waitFor(() => expect(mocks.downloadBlob).toHaveBeenCalledTimes(3));
 
     const [blob, filename] = mocks.downloadBlob.mock.calls[2] as [Blob, string];
     expect(blob.type).toBe("application/octet-stream");
     expect(filename).toBe("endfieldize.livp");
+  });
+
+  it("shows a localized unsupported message when mp4 export is unavailable", async () => {
+    const user = userEvent.setup();
+    mocks.exportVideo.mockRejectedValueOnce(new Error("MP4 video recording is unavailable in this browser"));
+    render(<App />);
+
+    const uploadInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    await user.upload(uploadInput, new File(["image"], "sample.png", { type: "image/png" }));
+    await waitFor(() => expect(screen.getByText("sample.png")).toBeTruthy());
+
+    await user.click(screen.getByRole("button", { name: "MP4" }));
+
+    expect(mocks.exportVideo).toHaveBeenCalledWith(expect.objectContaining({ format: "mp4" }));
+    await waitFor(() =>
+      expect(screen.getByText("当前浏览器不支持 MP4 导出。请在高级导出中使用 WEBM，或导出 GIF。")).toBeTruthy(),
+    );
+    expect(mocks.downloadVideo).not.toHaveBeenCalled();
   });
 });

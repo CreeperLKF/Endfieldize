@@ -1,11 +1,20 @@
-import type { AppState } from "../types";
+import type { AppState, ExportFormat } from "../types";
+import { exportStateForMotionQuality, videoBitsPerSecondForExport } from "./exportQuality";
 import { renderComposition } from "./render";
 
+export type VideoExportFormat = Extract<ExportFormat, "mp4" | "webm">;
+
 export interface VideoExportOptions {
+  format: VideoExportFormat;
   image: HTMLImageElement;
   state: AppState;
   onProgress: (progress: number) => void;
 }
+
+const VIDEO_MIME_CANDIDATES = {
+  mp4: ["video/mp4;codecs=h264", "video/mp4"],
+  webm: ["video/webm;codecs=vp9", "video/webm"],
+} satisfies Record<VideoExportFormat, string[]>;
 
 function wait(ms: number): Promise<void> {
   return new Promise((resolve) => {
@@ -19,28 +28,64 @@ function stopStream(stream: MediaStream): void {
   }
 }
 
-export async function exportVideo({ image, state, onProgress }: VideoExportOptions): Promise<Blob> {
+function getMediaRecorderConstructor(): typeof MediaRecorder | null {
+  if (typeof window !== "undefined" && window.MediaRecorder) {
+    return window.MediaRecorder;
+  }
+
+  if (typeof MediaRecorder !== "undefined") {
+    return MediaRecorder;
+  }
+
+  return null;
+}
+
+function unsupportedVideoError(format: VideoExportFormat): Error {
+  return new Error(`${format.toUpperCase()} video recording is unavailable in this browser`);
+}
+
+export function selectVideoMimeType(format: VideoExportFormat): string | null {
+  const Recorder = getMediaRecorderConstructor();
+
+  if (!Recorder || typeof Recorder.isTypeSupported !== "function") {
+    return null;
+  }
+
+  return VIDEO_MIME_CANDIDATES[format].find((type) => Recorder.isTypeSupported(type)) ?? null;
+}
+
+export function isVideoFormatSupported(format: VideoExportFormat): boolean {
+  return selectVideoMimeType(format) !== null;
+}
+
+export async function exportVideo({ format, image, state, onProgress }: VideoExportOptions): Promise<Blob> {
+  const exportState = exportStateForMotionQuality(state);
   const canvas = document.createElement("canvas");
-  canvas.width = state.export.width;
-  canvas.height = state.export.height;
+  canvas.width = exportState.export.width;
+  canvas.height = exportState.export.height;
 
   if (!canvas.captureStream) {
     throw new Error("Canvas video capture is unavailable in this browser");
   }
 
-  if (!window.MediaRecorder) {
-    throw new Error("Video recording is unavailable in this browser");
+  const Recorder = getMediaRecorderConstructor();
+  const mimeType = selectVideoMimeType(format);
+  if (!Recorder || !mimeType) {
+    throw unsupportedVideoError(format);
   }
 
-  const fps = state.motion.fps;
+  const fps = exportState.motion.fps;
   const stream = canvas.captureStream(fps);
-  const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9") ? "video/webm;codecs=vp9" : "video/webm";
+  const videoBitsPerSecond = videoBitsPerSecondForExport(exportState.export.quality);
   let recorder: MediaRecorder;
 
   try {
-    recorder = new MediaRecorder(stream, { mimeType });
+    recorder = new Recorder(stream, { mimeType, videoBitsPerSecond });
   } catch (error) {
     stopStream(stream);
+    if (format === "mp4") {
+      throw unsupportedVideoError(format);
+    }
     throw error;
   }
 
@@ -64,7 +109,7 @@ export async function exportVideo({ image, state, onProgress }: VideoExportOptio
   try {
     recorder.start();
 
-    const totalFrames = Math.max(1, Math.round(state.motion.durationSeconds * fps));
+    const totalFrames = Math.max(1, Math.round(exportState.motion.durationSeconds * fps));
     const frameDuration = 1000 / fps;
     const startTime = performance.now();
 
@@ -74,7 +119,7 @@ export async function exportVideo({ image, state, onProgress }: VideoExportOptio
       }
 
       const progress = frame / totalFrames;
-      renderComposition({ canvas, image, state, frameProgress: progress });
+      renderComposition({ canvas, image, state: exportState, frameProgress: progress });
       onProgress(progress);
 
       const nextFrameTime = startTime + (frame + 1) * frameDuration;
