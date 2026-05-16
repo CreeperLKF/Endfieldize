@@ -7,7 +7,7 @@ import { downloadBlob, renderStillBlob } from "./lib/exportStill";
 import { jpegQualityForExport } from "./lib/exportQuality";
 import { downloadVideo, exportVideo, type VideoExportFormat } from "./lib/exportVideo";
 import { classifyLivePhotoFiles, packageLivp } from "./lib/livePhoto";
-import { DEFAULT_PREVIEW_LONG_EDGE, outputSizeForAspect, outputSizeForState } from "./lib/outputSize";
+import { DEFAULT_PREVIEW_LONG_EDGE, outputSizeForAspect, outputSizeForState, stillExportSizeForState } from "./lib/outputSize";
 import { renderComposition } from "./lib/render";
 import { DEFAULT_STATE, GRADE_PRESET_ORDER, TITLE_PRESET_ORDER, applyGradePreset, applyTitlePreset, markGradeCustom } from "./presets";
 import type { LabelKey } from "./i18n";
@@ -335,9 +335,10 @@ export default function App() {
 
     const type = format === "jpg" ? "image/jpeg" : "image/png";
     const quality = format === "jpg" ? jpegQualityForExport(state.export.quality) : undefined;
+    const stillExportSize = stillExportSizeForState(state);
     const exportState: AppState = {
       ...state,
-      export: { ...state.export, format, width: exportSize.width, height: exportSize.height },
+      export: { ...state.export, format, width: stillExportSize.width, height: stillExportSize.height },
     };
 
     setState((current) => ({
@@ -540,7 +541,7 @@ export default function App() {
     <main className="app-shell">
       <header className="topbar">
         <div>
-          <p className="eyebrow">ENDFIELDIZE / MVP</p>
+          <p className="eyebrow">ENDFIELDIZE</p>
           <h1>{t(language, "workspace")}</h1>
         </div>
         <div className="topbar-actions">

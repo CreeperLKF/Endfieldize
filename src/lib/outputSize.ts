@@ -47,3 +47,11 @@ export function outputSizeForState(state: AppState, longEdge = Math.max(state.ex
 
   return outputSizeForAspect(longEdge, state.motion.outputAspect, source?.width, source?.height);
 }
+
+export function stillExportSizeForState(state: AppState): { width: number; height: number } {
+  const source = state.sourceImage ?? state.sourceVideo;
+  const sourceLongEdge = Math.max(safePositive(source?.width, 0), safePositive(source?.height, 0));
+  const requestedLongEdge = Math.max(state.export.width, state.export.height, sourceLongEdge);
+
+  return outputSizeForAspect(requestedLongEdge, state.motion.outputAspect, source?.width, source?.height);
+}

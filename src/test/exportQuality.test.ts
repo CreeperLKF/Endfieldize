@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   exportQualitySettings,
+  gifQualitySettings,
   exportStateForMotionQuality,
   jpegQualityForExport,
   videoBitsPerSecondForExport,
@@ -13,9 +14,9 @@ describe("export quality profiles", () => {
   });
 
   it("maps JPG quality to fixed values", () => {
-    expect(jpegQualityForExport("small")).toBe(0.78);
-    expect(jpegQualityForExport("standard")).toBe(0.86);
-    expect(jpegQualityForExport("high")).toBe(0.94);
+    expect(jpegQualityForExport("small")).toBe(0.82);
+    expect(jpegQualityForExport("standard")).toBe(0.9);
+    expect(jpegQualityForExport("high")).toBe(0.98);
   });
 
   it("maps video bitrate to each quality profile", () => {
@@ -62,5 +63,11 @@ describe("export quality profiles", () => {
     expect(high.export.width).toBe(1920);
     expect(high.export.height).toBe(1080);
     expect(high.motion.fps).toBe(24);
+  });
+
+  it("uses social-sized GIF quality profiles with capped grain", () => {
+    expect(gifQualitySettings("small")).toEqual({ scale: 1 / 3, fps: 12, maxColors: 96, maxGrain: 0 });
+    expect(gifQualitySettings("standard")).toEqual({ scale: 5 / 12, fps: 12, maxColors: 128, maxGrain: 0 });
+    expect(gifQualitySettings("high")).toEqual({ scale: 0.5, fps: 15, maxColors: 192, maxGrain: 0 });
   });
 });

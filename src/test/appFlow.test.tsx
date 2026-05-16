@@ -152,8 +152,8 @@ describe("app editor flow", () => {
     const exportSection = screen.getByText("05 / 导出").closest(".panel-section") as HTMLElement;
     expect(within(exportSection).getByText("图片")).toBeTruthy();
     expect(within(exportSection).getByText("视频")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "JPG" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "PNG" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "JPG 压缩" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "PNG 无损" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "MP4" })).toBeTruthy();
     expect((screen.getByRole("button", { name: "GIF" }) as HTMLButtonElement).disabled).toBe(false);
 
@@ -173,11 +173,11 @@ describe("app editor flow", () => {
     expect(mocks.downloadVideo).not.toHaveBeenCalled();
     expect(mocks.downloadBlob).not.toHaveBeenCalled();
 
-    await user.click(screen.getByRole("button", { name: "JPG" }));
+    await user.click(screen.getByRole("button", { name: "JPG 压缩" }));
     await waitFor(() => expect(mocks.downloadBlob).toHaveBeenCalledWith(expect.any(Blob), "endfieldize.jpg"));
-    expect(mocks.renderStillBlob).toHaveBeenLastCalledWith(expect.any(TestImage), expect.any(Object), "image/jpeg", 0.94);
+    expect(mocks.renderStillBlob).toHaveBeenLastCalledWith(expect.any(TestImage), expect.any(Object), "image/jpeg", 0.98);
 
-    await user.click(screen.getByRole("button", { name: "PNG" }));
+    await user.click(screen.getByRole("button", { name: "PNG 无损" }));
     await waitFor(() => expect(mocks.downloadBlob).toHaveBeenCalledWith(expect.any(Blob), "endfieldize.png"));
     expect(mocks.renderStillBlob).toHaveBeenLastCalledWith(expect.any(TestImage), expect.any(Object), "image/png", undefined);
 
@@ -229,6 +229,28 @@ describe("app editor flow", () => {
           export: expect.objectContaining({ width: 1440, height: 1920 }),
         }),
       }),
+    );
+  });
+
+  it("exports high resolution stills at the uploaded source long edge", async () => {
+    const user = userEvent.setup();
+    TestImage.nextNaturalWidth = 4032;
+    TestImage.nextNaturalHeight = 3024;
+    render(<App />);
+
+    const uploadInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    await user.upload(uploadInput, new File(["image"], "large.jpg", { type: "image/jpeg" }));
+    await waitFor(() => expect(screen.getByText("large.jpg")).toBeTruthy());
+
+    await user.click(screen.getByRole("button", { name: "JPG 压缩" }));
+    await waitFor(() => expect(mocks.downloadBlob).toHaveBeenCalledWith(expect.any(Blob), "endfieldize.jpg"));
+    expect(mocks.renderStillBlob).toHaveBeenLastCalledWith(
+      expect.any(TestImage),
+      expect.objectContaining({
+        export: expect.objectContaining({ width: 4032, height: 3024 }),
+      }),
+      "image/jpeg",
+      0.98,
     );
   });
 });

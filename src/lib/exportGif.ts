@@ -1,5 +1,5 @@
 import type { AppState } from "../types";
-import { exportStateForMotionQuality } from "./exportQuality";
+import { exportStateForGifQuality, gifQualitySettings } from "./exportQuality";
 import { frameProgress, videoFramePlan } from "./exportVideo";
 import { renderComposition } from "./render";
 
@@ -43,10 +43,11 @@ function defaultGifEncoderLoader(): Promise<GifEncoderModule> {
 }
 
 export async function exportGif({ image, state, onProgress = () => {}, gifEncoderLoader = defaultGifEncoderLoader }: GifExportOptions): Promise<Blob> {
-  const exportState = exportStateForMotionQuality({
+  const exportState = exportStateForGifQuality({
     ...state,
     export: { ...state.export, format: "gif" },
   });
+  const settings = gifQualitySettings(exportState.export.quality);
   const canvas = document.createElement("canvas");
   canvas.width = exportState.export.width;
   canvas.height = exportState.export.height;
@@ -60,18 +61,28 @@ export async function exportGif({ image, state, onProgress = () => {}, gifEncode
   const plan = videoFramePlan(exportState.motion.durationSeconds, fps);
   const { GIFEncoder, applyPalette, quantize } = await gifEncoderLoader();
   const gif = GIFEncoder();
+  let palette: GifPalette | null = null;
 
   for (let frame = 0; frame < plan.frameCount; frame += 1) {
     const progress = frameProgress(frame, plan.frameCount);
     renderComposition({ canvas, image, state: exportState, frameProgress: progress });
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const palette = quantize(imageData.data, 256, { format: "rgb444" });
+    palette ??= quantize(imageData.data, settings.maxColors, { format: "rgb444" });
     const indexedPixels = applyPalette(imageData.data, palette, "rgb444");
+    const frameOptions =
+      frame === 0
+        ? {
+            palette,
+            delay: plan.frameDurationMs,
+            repeat: 0,
+            dispose: -1,
+          }
+        : {
+            delay: plan.frameDurationMs,
+            dispose: -1,
+          };
     gif.writeFrame(indexedPixels, canvas.width, canvas.height, {
-      palette,
-      delay: plan.frameDurationMs,
-      repeat: 0,
-      dispose: -1,
+      ...frameOptions,
     });
     onProgress(Math.min(0.98, ((frame + 1) / plan.frameCount) * 0.98));
 
