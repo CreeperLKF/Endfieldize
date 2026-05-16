@@ -14,7 +14,7 @@ export function normalizeVersion(rawVersion) {
   const version = String(rawVersion ?? "").trim().replace(/^v/, "");
 
   if (!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(version)) {
-    throw new Error(`Expected a semver release like 0.2.0 or v0.2.0, received: ${rawVersion}`);
+    throw new Error(`Expected a semver release like 1.2.3 or v1.2.3, received: ${rawVersion}`);
   }
 
   return version;

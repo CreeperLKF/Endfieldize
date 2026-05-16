@@ -20,11 +20,11 @@ The MVP supports browser video export. Live Photo export is intentionally decoup
 CDN assets are published to the `cdn` branch by version directory, so jsDelivr can serve immutable release paths without committing `dist/` to `main`.
 
 ```bash
-npm run release:cdn -- v0.2.1 --publish
+npm run release:cdn -- vX.Y.Z --publish
 ```
 
-The v0.2.1 CDN base is:
+Versioned CDN paths use this shape:
 
 ```text
-https://cdn.jsdelivr.net/gh/CreeperLKF/Endfieldize@cdn/v0.2.1/
+https://cdn.jsdelivr.net/gh/CreeperLKF/Endfieldize@cdn/vX.Y.Z/
 ```

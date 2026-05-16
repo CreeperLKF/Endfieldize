@@ -67,20 +67,6 @@ describe("video export format support", () => {
     }
   });
 
-  it("prefers h264 mp4 when available", () => {
-    TestMediaRecorder.supportedTypes = new Set(["video/mp4", "video/mp4;codecs=h264"]);
-
-    expect(selectVideoMimeType("mp4")).toBe("video/mp4;codecs=h264");
-    expect(isVideoFormatSupported("mp4")).toBe(true);
-  });
-
-  it("falls back to bare mp4", () => {
-    TestMediaRecorder.supportedTypes = new Set(["video/mp4"]);
-
-    expect(selectVideoMimeType("mp4")).toBe("video/mp4");
-    expect(isVideoFormatSupported("mp4")).toBe(true);
-  });
-
   it("keeps vp9 webm when available", () => {
     TestMediaRecorder.supportedTypes = new Set(["video/webm", "video/webm;codecs=vp9"]);
 
@@ -89,8 +75,6 @@ describe("video export format support", () => {
   });
 
   it("returns null and false when no candidate is supported", () => {
-    expect(selectVideoMimeType("mp4")).toBeNull();
-    expect(isVideoFormatSupported("mp4")).toBe(false);
     expect(selectVideoMimeType("webm")).toBeNull();
     expect(isVideoFormatSupported("webm")).toBe(false);
   });
@@ -98,8 +82,8 @@ describe("video export format support", () => {
   it("returns null and false when MediaRecorder is unavailable", () => {
     vi.stubGlobal("MediaRecorder", undefined);
 
-    expect(selectVideoMimeType("mp4")).toBeNull();
-    expect(isVideoFormatSupported("mp4")).toBe(false);
+    expect(selectVideoMimeType("webm")).toBeNull();
+    expect(isVideoFormatSupported("webm")).toBe(false);
   });
 
   it("plans exactly the requested duration without an extra terminal frame", () => {

@@ -3,6 +3,7 @@ import { exportStateForMotionQuality, videoBitsPerSecondForExport } from "./expo
 import { renderComposition } from "./render";
 
 export type VideoExportFormat = Extract<ExportFormat, "mp4" | "webm">;
+type RecorderVideoExportFormat = Extract<VideoExportFormat, "webm">;
 
 export interface VideoExportOptions {
   format: VideoExportFormat;
@@ -38,9 +39,8 @@ interface MediabunnyModule {
 type MediabunnyLoader = () => Promise<MediabunnyModule>;
 
 const VIDEO_MIME_CANDIDATES = {
-  mp4: ["video/mp4;codecs=h264", "video/mp4"],
   webm: ["video/webm;codecs=vp9", "video/webm"],
-} satisfies Record<VideoExportFormat, string[]>;
+} satisfies Record<RecorderVideoExportFormat, string[]>;
 
 function wait(ms: number): Promise<void> {
   return new Promise((resolve) => {
@@ -82,7 +82,7 @@ async function defaultMediabunnyLoader(): Promise<MediabunnyModule> {
   return (await import("mediabunny")) as unknown as MediabunnyModule;
 }
 
-export function selectVideoMimeType(format: VideoExportFormat): string | null {
+export function selectVideoMimeType(format: RecorderVideoExportFormat): string | null {
   const Recorder = getMediaRecorderConstructor();
 
   if (!Recorder || typeof Recorder.isTypeSupported !== "function") {
@@ -92,7 +92,7 @@ export function selectVideoMimeType(format: VideoExportFormat): string | null {
   return VIDEO_MIME_CANDIDATES[format].find((type) => Recorder.isTypeSupported(type)) ?? null;
 }
 
-export function isVideoFormatSupported(format: VideoExportFormat): boolean {
+export function isVideoFormatSupported(format: RecorderVideoExportFormat): boolean {
   return selectVideoMimeType(format) !== null;
 }
 
@@ -173,7 +173,12 @@ async function exportMp4WithWebCodecs({
   return new Blob([buffer], { type: "video/mp4" });
 }
 
-async function exportMediaRecorderVideo({ format, image, state, onProgress }: VideoExportOptions): Promise<Blob> {
+async function exportMediaRecorderVideo({
+  format,
+  image,
+  state,
+  onProgress,
+}: Omit<VideoExportOptions, "format" | "mediabunnyLoader"> & { format: RecorderVideoExportFormat }): Promise<Blob> {
   const exportState = exportStateForMotionQuality(state);
   const canvas = document.createElement("canvas");
   canvas.width = exportState.export.width;
@@ -287,7 +292,12 @@ export async function exportVideo(options: VideoExportOptions): Promise<Blob> {
     }
   }
 
-  return exportMediaRecorderVideo(options);
+  return exportMediaRecorderVideo({
+    format: options.format,
+    image: options.image,
+    state: options.state,
+    onProgress: options.onProgress,
+  });
 }
 
 export function downloadVideo(blob: Blob, filename = "endfieldize.webm"): void {
